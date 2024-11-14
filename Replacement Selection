@@ -1,0 +1,69 @@
+import heapq  
+
+def replacement_selection_sort(data_list, buffer_size=5):
+    sorted_runs = []           # 정렬된 여러 런을 저장할 리스트입니다
+    current_sequence = []      # 현재 런을 저장할 리스트입니다
+    heap = []                  # 힙 역할을 하는 우선순위 큐입니다
+    data_pointer = buffer_size  # 데이터 리스트에서 다음에 읽을 위치를 나타냅니다
+
+    # 초기 힙을 채웁니다 (처음 buffer_size 개수만큼)
+    for item in data_list[:buffer_size]:
+        # 힙에 (정렬 키, 실제 값) 형태로 저장합니다
+        heapq.heappush(heap, (item, item))
+
+    # 힙이 빌 때까지 반복합니다
+    while heap:
+        # 힙에서 가장 작은 값을 꺼냅니다
+        smallest_key, smallest_value = heapq.heappop(heap)
+        current_sequence.append(smallest_value)  # 현재 런에 추가합니다
+
+        # 데이터에서 새로운 값을 가져올 수 있는지 확인합니다
+        if data_pointer < len(data_list):
+            incoming_value = data_list[data_pointer]
+            data_pointer += 1  # 다음에 가져올 위치를 한 칸 앞으로 이동합니다
+
+            if incoming_value >= smallest_value:
+                # 새 값이 이전 값보다 크거나 같으면 현재 런에 포함합니다
+                heapq.heappush(heap, (incoming_value, incoming_value))
+            else:
+                heapq.heappush(heap, (float('inf'), incoming_value))
+        # 힙이 비었거나 동결된 값만 남았는지 확인합니다
+        if not heap or all(key == float('inf') for key, _ in heap):
+            sorted_runs.append(current_sequence)  # 현재 런을 저장합니다
+            current_sequence = []                # 새로운 런을 시작합니다
+            # 동결된 값들의 동결을 해제하여 다음 런에서 사용할 수 있도록 합니다
+            refreshed_heap = []
+            for _, val in heap:
+                heapq.heappush(refreshed_heap, (val, val))
+            heap = refreshed_heap  # 힙을 업데이트합니다
+
+    # 마지막 런이 남아있으면 저장합니다
+    if current_sequence:
+        sorted_runs.append(current_sequence)
+
+    return sorted_runs  # 모든 런을 반환합니다
+
+
+def main():
+    # 'replacement_input.txt' 파일에서 입력을 읽어옵니다
+    with open('replacement_input.txt', 'r') as input_file:
+        test_case_count = int(input_file.readline().strip())  # 테스트 케이스의 수를 읽습니다
+        all_results = []
+
+        for _ in range(test_case_count):
+            data_length = int(input_file.readline().strip())  # 데이터의 길이를 읽습니다
+            data_list = list(map(int, input_file.readline().strip().split()))  # 데이터를 리스트로 변환합니다
+            runs = replacement_selection_sort(data_list, buffer_size=5)  # 정렬 알고리즘을 실행합니다
+            all_results.append(runs)  # 결과를 저장합니다
+
+    # 결과를 'replacement_output.txt' 파일에 씁니다
+    with open('replacement_output.txt', 'w') as output_file:
+        for runs in all_results:
+            output_file.write(f"{len(runs)}\n")  # 런의 수를 씁니다
+            for run in runs:
+                # 각 런의 값을 공백으로 구분하여 씁니다
+                output_file.write(' '.join(map(str, run)) + '\n')
+
+
+if __name__ == "__main__":
+    main()  # 프로그램을 시작합니다
